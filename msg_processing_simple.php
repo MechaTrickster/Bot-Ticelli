@@ -58,8 +58,7 @@ else if (isset($message['text'])) {
     if (strpos($text, "cerca") === 0) {
  
         //estrapola la posizione dell'utente
-        $pos = db_table_query("SELECT * FROM current_pos WHERE Id = 
-        $from_id");
+        $pos = db_table_query("SELECT * FROM current_pos WHERE Id = $from_id");
 
         //se l'utente ha segnalato la sua posizione
         if (count($pos) >= 1) {
@@ -75,6 +74,9 @@ else if (isset($message['text'])) {
             FROM `distributori`
             ORDER BY distance ASC
             LIMIT 1");
+
+            //ERRORE DI CERCA SI TROVA QUA !
+            echo("n1: ".$nearby[0][0]."n2: ".$nearby[0][1]);
 
             telegram_send_location($chat_id, $nearby[0][0], $nearby[0][1]);
             telegram_send_message($chat_id, 'Questa è la location a te più vicina', null);
@@ -114,12 +116,22 @@ else if (isset($message['text'])) {
 
             //se la posizione corrente rientra nell'intervallo di quella più vicina
             //allora non viene consentito l'inserimento
-            if (($save_lat >= $prova[0][0]-0.1 && $save_lat <= $prova[0][0]+0.1) && 
-                ($save_lng >= $prova[0][1]-0.1 && $save_lng <= $prova[0][1]+0.1))
+            if (($save_lat >= $prova[0][0]-0.001 && $save_lat <= $prova[0][0]+0.001) && 
+                ($save_lng >= $prova[0][1]-0.001 && $save_lng <= $prova[0][1]+0.001))
+
+                    //sono dentro l'area
                     telegram_send_message($chat_id, 'Questa posizione è già stata inserita !', null);
             else {
-                //si salvano le coordinate nella tabella 'animal shelter'
-                db_perform_action("REPLACE INTO distributori VALUES($save_lat, $save_lng)");    
+
+                //fuori dall'area, posso salvare 
+            
+                $newID = uniqid();
+
+                $id = hexdec( uniqid() );
+
+                db_perform_action("INSERT INTO distributori (Id, Longitudine, Latitudine)
+                VALUES($id, $save_lng, $save_lat)");   
+
                 telegram_send_message($chat_id, 'Una nuova posizione è stata inserita', null);
             }           
         }
@@ -150,29 +162,47 @@ else if (isset($message['text'])) {
                 ORDER BY distance ASC
                 LIMIT 1");  
 
-                //se la posizione corrente non rientra nell'intervallo del distributore più vicino
-                //allora non viene consentito il nuovo l'inserimento
-                if (($lat >= $nearby[0][0]+0.1 && $lat <= $nearby[0][0]-0.1) && 
-                    ($lng >= $nearby[0][1]+0.1 && $lng <= $nearby[0][1]-0.1))
+                //controlla di essere nel raggio (200m) di un distributore
+                if (($lat >= $nearby[0][0]+0.001 && $lat <= $nearby[0][0]-0.001) && 
+                    ($lng >= $nearby[0][1]+0.001 && $lng <= $nearby[0][1]-0.001)) {
+
+                        //se non è nel raggio
                         telegram_send_message($chat_id, 'Devi essere vicino al distributore per effettuare modifiche', null);
-                
-                //si può aggiungere l'opzione
+                }
+                //se è nel raggio di un distributore
                 else {
 
-                    /*validazione
-                    $val = db_table_query('SELECT CASE
-                                                WHEN Gpl = true
+                    //seleziona il distributore in questione
+                    $var = db_table_query("SELECT Id FROM distributori WHERE Latitudine BETWEEN
+                                        $lat - 0.001 AND $lat + 0.001 AND Longitudine BETWEEN
+                                        $lng - 0.001 AND $lng + 0.001 LIMIT 1");
+
+                    $stazione = $var[0][0];
+
+                    //validazione
+                    $val = db_table_query("SELECT Gpl FROM distributori WHERE Id = $stazione");
+
+
+
+                   /* $val = db_table_query("SELECT CASE
+                                                WHEN Gpl = 'true' AND Id = $stazione
                                                     THEN 1
-                                                ELSE 0
-                                            END AS bit
-                                            FROM distributori');  */
+                                                WHEN Gpl = 'false' AND Id = $stazione
+                                                    THEN 0
+                                            END
+                                            FROM distributori");    */
 
-                    $var = db_table_query("SELECT Id FROM distributori WHERE Latitudine BETWEEN $lat - 0.1 AND $lat + 0.1 AND Longitudine BETWEEN $lng - 0.1 AND $lng + 0.1 LIMIT 1");
+                    if($val[0][0] == 'true')
+                        telegram_send_message($chat_id, 'Un erogatore di Gpl è già presente', null);    
+                    
+                    else if($val[0][0] == 'false') {
+                        db_perform_action("UPDATE distributori SET Gpl = true WHERE Id = $stazione");
+                    
+                        telegram_send_message($chat_id, 'Hai aggiunto una stazione di Gpl', null);
+                    }
 
-                    telegram_send_message($chat_id, "var vale: $var[0].$var[1].$var[2]", null);
-
-                    telegram_send_message($chat_id, 'Hai aggiunto una stazione di Gpl', null);
-               
+                    else
+                    telegram_send_message($chat_id, 'Problemi presenti nel DB', null);
                 }                
             }
             //posizione non trovata 
@@ -182,12 +212,12 @@ else if (isset($message['text'])) {
     
     else if (strpos($text, "Metano") === 18){
 
-        telegram_send_message($chat_id, 'culo', null);
+
     }
 
     else if (strpos($text, "Elettrica") === 18){
 
-        telegram_send_message($chat_id, 'culo', null);
+
     }
 
     else
