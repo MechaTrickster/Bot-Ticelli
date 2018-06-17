@@ -43,7 +43,7 @@ if (isset($message['location'])) {
     $lng = $message['location']['longitude'];
 
     //inserisce i dati nella tabella 'current_position'
-    db_perform_action("REPLACE INTO current_position VALUES($chat_id, $lat,
+    db_perform_action("REPLACE INTO current_pos VALUES($chat_id, $lat,
     $lng)");
 
     echo "Utente $from_id in $lat,$lng" . PHP_EOL;
@@ -58,7 +58,7 @@ else if (isset($message['text'])) {
     if (strpos($text, "cerca") === 0) {
  
         //estrapola la posizione dell'utente
-        $pos = db_table_query("SELECT * FROM current_position WHERE user_id = 
+        $pos = db_table_query("SELECT * FROM current_pos WHERE Id = 
         $from_id");
 
         //se l'utente ha segnalato la sua posizione
@@ -70,9 +70,9 @@ else if (isset($message['text'])) {
 
             //estrae la locazione piu' vicina all'utente corrente
             $nearby = db_table_query("SELECT *, 
-            SQRT(POW($lat - lat, 2) + POW($lng - lng, 2)) 
+            SQRT(POW($lat - Latitudine, 2) + POW($lng - Longitudine, 2)) 
             AS distance
-            FROM `animal_shelter`
+            FROM `distributori`
             ORDER BY distance ASC
             LIMIT 1");
 
@@ -91,24 +91,24 @@ else if (isset($message['text'])) {
         $save_id = 0;
 
         //estrae l'id dalla tabella 'current_position'
-        $save_id = db_scalar_query("SELECT user_id FROM current_position WHERE user_id = 
+        $save_id = db_scalar_query("SELECT Id FROM current_pos WHERE Id = 
         $from_id");
 
         //se l'id utente trova corrispondenza nella tabella 'current_position' 
         if ($save_id != 0) {
             
             //copia latitudine 
-            $save_lat = db_scalar_query("SELECT lat FROM current_position");
+            $save_lat = db_scalar_query("SELECT Latitudine FROM current_pos");
             
             //copia longitudine
-            $save_lng = db_scalar_query("SELECT lng FROM current_position");
+            $save_lng = db_scalar_query("SELECT Longitudine FROM current_pos");
 
             //***VALIDAZIONE INSERIMENTO ***/
             //cerca la posizione più vicina a quella corrente
             $prova = db_table_query("SELECT *, 
-            SQRT(POW($save_lat - lat, 2) + POW($save_lng - lng, 2)) 
+            SQRT(POW($save_lat - Latitudine, 2) + POW($save_lng - Longitudine, 2)) 
             AS distance
-            FROM `animal_shelter`
+            FROM `distributori`
             ORDER BY distance ASC
             LIMIT 1");
 
@@ -119,7 +119,7 @@ else if (isset($message['text'])) {
                     telegram_send_message($chat_id, 'Questa posizione è già stata inserita !', null);
             else {
                 //si salvano le coordinate nella tabella 'animal shelter'
-                db_perform_action("REPLACE INTO animal_shelter VALUES($save_lat, $save_lng)");    
+                db_perform_action("REPLACE INTO distributori VALUES($save_lat, $save_lng)");    
                 telegram_send_message($chat_id, 'Una nuova posizione è stata inserita', null);
             }           
         }
@@ -128,6 +128,68 @@ else if (isset($message['text'])) {
         else
             telegram_send_message($chat_id, 'Devi inviare la tua posizione prima di poter salvare', null);
     }
+
+    else if (strpos($text, "Gpl") === 18){
+
+            //estrapola la posizione dell'utente
+            $pos = db_table_query("SELECT * FROM current_pos WHERE Id = 
+            $from_id");
+        
+            //se l'utente ha segnalato la sua posizione
+            if (count($pos) >= 1) {
+                    
+                //copia le coordinate
+                $lat = $pos[0][1];
+                $lng = $pos[0][2];
+        
+                //estrae la locazione piu' vicina all'utente corrente
+                $nearby = db_table_query("SELECT *, 
+                SQRT(POW($lat - Latitudine, 2) + POW($lng - Longitudine, 2)) 
+                AS distance
+                FROM `distributori`
+                ORDER BY distance ASC
+                LIMIT 1");  
+
+                //se la posizione corrente non rientra nell'intervallo del distributore più vicino
+                //allora non viene consentito il nuovo l'inserimento
+                if (($lat >= $nearby[0][0]+0.1 && $lat <= $nearby[0][0]-0.1) && 
+                    ($lng >= $nearby[0][1]+0.1 && $lng <= $nearby[0][1]-0.1))
+                        telegram_send_message($chat_id, 'Devi essere vicino al distributore per effettuare modifiche', null);
+                
+                //si può aggiungere l'opzione
+                else {
+
+                    /*validazione
+                    $val = db_table_query('SELECT CASE
+                                                WHEN Gpl = true
+                                                    THEN 1
+                                                ELSE 0
+                                            END AS bit
+                                            FROM distributori');  */
+
+                    $var = db_table_query("SELECT Id FROM distributori WHERE Latitudine BETWEEN $lat - 0.1 AND $lat + 0.1 AND Longitudine BETWEEN $lng - 0.1 AND $lng + 0.1 LIMIT 1");
+
+                    telegram_send_message($chat_id, "var vale: $var[0].$var[1].$var[2]", null);
+
+                    telegram_send_message($chat_id, 'Hai aggiunto una stazione di Gpl', null);
+               
+                }                
+            }
+            //posizione non trovata 
+            else
+                telegram_send_message($chat_id, 'Devi mandare prima le tue coordinate', null);
+    }
+    
+    else if (strpos($text, "Metano") === 18){
+
+        telegram_send_message($chat_id, 'culo', null);
+    }
+
+    else if (strpos($text, "Elettrica") === 18){
+
+        telegram_send_message($chat_id, 'culo', null);
+    }
+
     else
         telegram_send_message($chat_id, 'Non conosco questo comando', null);
 

@@ -86,6 +86,7 @@ function db_open_connection($quick = false) {
  *                    applicable, otherwise the number of affected rows.
  *                    Returns false on failure.
  */
+//Permette di aggiornare il db
 function db_perform_action($sql) {
     $connection = db_open_connection();
 
