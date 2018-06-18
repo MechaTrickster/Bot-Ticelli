@@ -37,6 +37,8 @@ $message_id = $message['message_id'];
 $chat_id = $message['chat']['id'];
 $from_id = $message['from']['id'];
 
+$nn = 0;
+
 //se viene inviata la posizione
 if (isset($message['location'])) {
     $lat = $message['location']['latitude'];
@@ -71,14 +73,11 @@ else if (isset($message['text'])) {
             $nearby = db_table_query("SELECT *, 
             SQRT(POW($lat - Latitudine, 2) + POW($lng - Longitudine, 2)) 
             AS distance
-            FROM `distributori`
+            FROM  beniCulturali`
             ORDER BY distance ASC
             LIMIT 1");
 
-            //ERRORE DI CERCA SI TROVA QUA !
-            echo("n1: ".$nearby[0][0]."n2: ".$nearby[0][1]);
-
-            telegram_send_location($chat_id, $nearby[0][0], $nearby[0][1]);
+            telegram_send_location($chat_id, $nearby[0][44], $nearby[0][45]);
             telegram_send_message($chat_id, 'Questa è la location a te più vicina', null);
         }
 
@@ -110,14 +109,14 @@ else if (isset($message['text'])) {
             $prova = db_table_query("SELECT *, 
             SQRT(POW($save_lat - Latitudine, 2) + POW($save_lng - Longitudine, 2)) 
             AS distance
-            FROM `distributori`
+            FROM  beniCulturali`
             ORDER BY distance ASC
             LIMIT 1");
 
             //se la posizione corrente rientra nell'intervallo di quella più vicina
             //allora non viene consentito l'inserimento
-            if (($save_lat >= $prova[0][0]-0.001 && $save_lat <= $prova[0][0]+0.001) && 
-                ($save_lng >= $prova[0][1]-0.001 && $save_lng <= $prova[0][1]+0.001))
+            if (($save_lat >= $prova[0][44]-0.001 && $save_lat <= $prova[0][44]+0.001) && 
+                ($save_lng >= $prova[0][45]-0.001 && $save_lng <= $prova[0][45]+0.001))
 
                     //sono dentro l'area
                     telegram_send_message($chat_id, 'Questa posizione è già stata inserita !', null);
@@ -129,7 +128,7 @@ else if (isset($message['text'])) {
 
                 $id = hexdec( uniqid() );
 
-                db_perform_action("INSERT INTO distributori (Id, Longitudine, Latitudine)
+                db_perform_action("INSERT INTO beniCulturali (Id, Longitudine, Latitudine)
                 VALUES($id, $save_lng, $save_lat)");   
 
                 telegram_send_message($chat_id, 'Una nuova posizione è stata inserita', null);
@@ -141,7 +140,7 @@ else if (isset($message['text'])) {
             telegram_send_message($chat_id, 'Devi inviare la tua posizione prima di poter salvare', null);
     }
 
-    else if (strpos($text, "Gpl") === 18){
+    else if (strpos($text, "dipinto") === 9){
 
             //estrapola la posizione dell'utente
             $pos = db_table_query("SELECT * FROM current_pos WHERE Id = 
@@ -158,51 +157,54 @@ else if (isset($message['text'])) {
                 $nearby = db_table_query("SELECT *, 
                 SQRT(POW($lat - Latitudine, 2) + POW($lng - Longitudine, 2)) 
                 AS distance
-                FROM `distributori`
+                FROM  beniCulturali`
                 ORDER BY distance ASC
                 LIMIT 1");  
 
-                //controlla di essere nel raggio (200m) di un distributore
-                if (($lat >= $nearby[0][0]+0.001 && $lat <= $nearby[0][0]-0.001) && 
-                    ($lng >= $nearby[0][1]+0.001 && $lng <= $nearby[0][1]-0.001)) {
+                $nn = $nearby[0][5];
+
+                //controlla di essere nel raggio (200m) di un opera
+                if (($lat >= $nearby[0][44]+0.001 && $lat <= $nearby[0][44]-0.001) && 
+                    ($lng >= $nearby[0][45]+0.001 && $lng <= $nearby[0][45]-0.001)) {
 
                         //se non è nel raggio
-                        telegram_send_message($chat_id, 'Devi essere vicino al distributore per effettuare modifiche', null);
+                        telegram_send_message($chat_id, 'Devi essere vicino a un opera per effettuare modifiche', null);
                 }
-                //se è nel raggio di un distributore
+                //se è nel raggio
                 else {
 
-                    //seleziona il distributore in questione
-                    $var = db_table_query("SELECT Id FROM distributori WHERE Latitudine BETWEEN
-                                        $lat - 0.001 AND $lat + 0.001 AND Longitudine BETWEEN
-                                        $lng - 0.001 AND $lng + 0.001 LIMIT 1");
-
-                    $stazione = $var[0][0];
+                    //seleziona l'opera in questione
+                    $idOpera = db_table_query("SELECT Id FROM beniCulturali WHERE Latitudine BETWEEN
+                                  $lat - 0.001 AND $lat + 0.001 AND Longitudine BETWEEN
+                                  $lng - 0.001 AND $lng + 0.001 LIMIT 1");
+              
+              $nearby[0] = 1;
+              telegram_send_message($chat_id, "ID = $nn", null);
 
                     //validazione
-                    $val = db_table_query("SELECT Gpl FROM distributori WHERE Id = $stazione");
+                   // $val = db_table_query("SELECT Gpl FROM beniCulturali WHERE Id = $bene");
 
 
 
                    /* $val = db_table_query("SELECT CASE
-                                                WHEN Gpl = 'true' AND Id = $stazione
+                                                WHEN Gpl = 'true' AND Id = $bene
                                                     THEN 1
-                                                WHEN Gpl = 'false' AND Id = $stazione
+                                                WHEN Gpl = 'false' AND Id = $bene
                                                     THEN 0
                                             END
-                                            FROM distributori");    */
+                                            FROM beniCulturali");    */
 
-                    if($val[0][0] == 'true')
-                        telegram_send_message($chat_id, 'Un erogatore di Gpl è già presente', null);    
+                 /*   if($val[0][46] == 'true' || $tipo != null)
+                        telegram_send_message($chat_id, 'Un dipinto è già stato inserito', null);    
                     
-                    else if($val[0][0] == 'false') {
-                        db_perform_action("UPDATE distributori SET Gpl = true WHERE Id = $stazione");
+                    else if($val[0][46] == 'false') {
+                        db_perform_action("UPDATE beniCulturali SET Dipinto = true WHERE Id = $bene");
                     
-                        telegram_send_message($chat_id, 'Hai aggiunto una stazione di Gpl', null);
+                        telegram_send_message($chat_id, 'Hai aggiunto un nuovo dipinto', null);
                     }
 
                     else
-                    telegram_send_message($chat_id, 'Problemi presenti nel DB', null);
+                    telegram_send_message($chat_id, 'Problemi presenti nel DB', null);  */
                 }                
             }
             //posizione non trovata 
@@ -210,12 +212,12 @@ else if (isset($message['text'])) {
                 telegram_send_message($chat_id, 'Devi mandare prima le tue coordinate', null);
     }
     
-    else if (strpos($text, "Metano") === 18){
+    else if (strpos($text, "scultura") === 9){
 
 
     }
 
-    else if (strpos($text, "Elettrica") === 18){
+    else if (strpos($text, "altro") === 9){
 
 
     }
