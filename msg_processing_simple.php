@@ -70,10 +70,11 @@ else if (isset($message['text'])) {
             $lng = $pos[0][2];
 
             //estrae la locazione piu' vicina all'utente corrente
+            
             $nearby = db_table_query("SELECT *, 
             SQRT(POW($lat - Latitudine, 2) + POW($lng - Longitudine, 2)) 
             AS distance
-            FROM  beniCulturali`
+            FROM beniCulturali
             ORDER BY distance ASC
             LIMIT 1");
 
@@ -88,40 +89,39 @@ else if (isset($message['text'])) {
 
     //salva una nuova posizione
     else if (strpos($text, "salva") === 0) {
-        
-        $save_id = 0;
 
         //estrae l'id dalla tabella 'current_position'
-        $save_id = db_scalar_query("SELECT Id FROM current_pos WHERE Id = 
-        $from_id");
+        $current = db_table_query("SELECT * FROM current_pos WHERE Id = $from_id");
 
         //se l'id utente trova corrispondenza nella tabella 'current_position' 
-        if ($save_id != 0) {
+        if ($current[0][0] != 0) {
             
             //copia latitudine 
-            $save_lat = db_scalar_query("SELECT Latitudine FROM current_pos");
+            $current_lat = db_scalar_query("SELECT Latitudine FROM current_pos WHERE Id = 
+                                            $from_id");
             
             //copia longitudine
-            $save_lng = db_scalar_query("SELECT Longitudine FROM current_pos");
+            $current_lng = db_scalar_query("SELECT Longitudine FROM current_pos WHERE Id = 
+                                            $from_id");
 
-            //***VALIDAZIONE INSERIMENTO ***/
-            //cerca la posizione più vicina a quella corrente
-            $prova = db_table_query("SELECT *, 
-            SQRT(POW($save_lat - Latitudine, 2) + POW($save_lng - Longitudine, 2)) 
+            $opera_pos = db_table_query("SELECT *, 
+            SQRT(POW($current_lat - Latitudine, 2) + POW($current_lng - Longitudine, 2)) 
             AS distance
-            FROM  beniCulturali`
+            FROM beniCulturali
             ORDER BY distance ASC
             LIMIT 1");
 
             //se la posizione corrente rientra nell'intervallo di quella più vicina
             //allora non viene consentito l'inserimento
-            if (($save_lat >= $prova[0][44]-0.001 && $save_lat <= $prova[0][44]+0.001) && 
-                ($save_lng >= $prova[0][45]-0.001 && $save_lng <= $prova[0][45]+0.001))
+            if (($current_lat >= $opera_pos[0][44]-0.001 && $current_lat <= $opera_pos[0][44]+0.001) && 
+                ($current_lng >= $opera_pos[0][45]-0.001 && $current_lng <= $opera_pos[0][45]+0.001))
 
                     //sono dentro l'area
                     telegram_send_message($chat_id, 'Questa posizione è già stata inserita !', null);
             else {
 
+                telegram_send_message($chat_id, "current lat e lng: $current_lat - $current_lng", null);
+                telegram_send_message($chat_id, "opera lat e lng: ".$opera_pos[0][44]." - ".$opera_pos[0][45], null);
                 //fuori dall'area, posso salvare 
             
                 $newID = uniqid();
@@ -129,7 +129,7 @@ else if (isset($message['text'])) {
                 $id = hexdec( uniqid() );
 
                 db_perform_action("INSERT INTO beniCulturali (Id, Longitudine, Latitudine)
-                VALUES($id, $save_lng, $save_lat)");   
+                VALUES($id, $current_lng, $current_lat)");   
 
                 telegram_send_message($chat_id, 'Una nuova posizione è stata inserita', null);
             }           
@@ -157,7 +157,7 @@ else if (isset($message['text'])) {
                 $nearby = db_table_query("SELECT *, 
                 SQRT(POW($lat - Latitudine, 2) + POW($lng - Longitudine, 2)) 
                 AS distance
-                FROM  beniCulturali`
+                FROM beniCulturali
                 ORDER BY distance ASC
                 LIMIT 1");  
 
