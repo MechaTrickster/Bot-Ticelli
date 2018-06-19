@@ -37,7 +37,7 @@ $message_id = $message['message_id'];
 $chat_id = $message['chat']['id'];
 $from_id = $message['from']['id'];
 
-$nn = 0;
+$museo_vicino = 0;
 
 //se viene inviata la posizione
 if (isset($message['location'])) {
@@ -57,7 +57,7 @@ else if (isset($message['text'])) {
     $text = $message['text'];
 
     //cerca la posizione più vicina
-    if (strpos($text, "cerca") === 0) {
+    if (strpos($text, "Cerca") === 0) {
  
         //estrapola la posizione dell'utente
         $pos = db_table_query("SELECT * FROM current_pos WHERE Id = $from_id");
@@ -74,12 +74,22 @@ else if (isset($message['text'])) {
             $nearby = db_table_query("SELECT *, 
             SQRT(POW($lat - Latitudine, 2) + POW($lng - Longitudine, 2)) 
             AS distance
-            FROM beniCulturali
+            FROM musei
             ORDER BY distance ASC
-            LIMIT 1");
+            ");
 
-            telegram_send_location($chat_id, $nearby[0][44], $nearby[0][45]);
+            telegram_send_location($chat_id, $nearby[0][13], $nearby[0][14]);
             telegram_send_message($chat_id, 'Questa è la location a te più vicina', null);
+            if ($nearby[0][11] != NULL)
+                telegram_send_message($chat_id, "Museo di ".$nearby[0][11], null);
+            else if ($nearby[0][20] > 0)
+                telegram_send_message($chat_id, "Museo di "."arte", null);
+            else if ($nearby[0][21] > 0)
+                telegram_send_message($chat_id, "Museo di "."storia", null);
+            else if ($nearby[0][22] > 0)
+                telegram_send_message($chat_id, "Museo di "."altro tipo", null);
+            else
+                telegram_send_message($chat_id,'Il tipo di museo non è stato specificato', null);
         }
 
         //posizione non trovata
@@ -88,7 +98,7 @@ else if (isset($message['text'])) {
     }
 
     //salva una nuova posizione
-    else if (strpos($text, "salva") === 0) {
+    else if (strpos($text, "Salva") === 0) {
 
         //estrae l'id dalla tabella 'current_position'
         $current = db_table_query("SELECT * FROM current_pos WHERE Id = $from_id");
@@ -107,28 +117,25 @@ else if (isset($message['text'])) {
             $opera_pos = db_table_query("SELECT *, 
             SQRT(POW($current_lat - Latitudine, 2) + POW($current_lng - Longitudine, 2)) 
             AS distance
-            FROM beniCulturali
+            FROM musei
             ORDER BY distance ASC
             LIMIT 1");
 
             //se la posizione corrente rientra nell'intervallo di quella più vicina
             //allora non viene consentito l'inserimento
-            if (($current_lat >= $opera_pos[0][44]-0.001 && $current_lat <= $opera_pos[0][44]+0.001) && 
-                ($current_lng >= $opera_pos[0][45]-0.001 && $current_lng <= $opera_pos[0][45]+0.001))
+            if (($current_lat >= $opera_pos[0][13]-0.001 && $current_lat <= $opera_pos[0][13]+0.001) && 
+                ($current_lng >= $opera_pos[0][14]-0.001 && $current_lng <= $opera_pos[0][14]+0.001))
 
                     //sono dentro l'area
-                    telegram_send_message($chat_id, 'Questa posizione è già stata inserita !', null);
+                    telegram_send_message($chat_id, 'Questo museo è già stato inserito!', null);
             else {
 
-                telegram_send_message($chat_id, "current lat e lng: $current_lat - $current_lng", null);
-                telegram_send_message($chat_id, "opera lat e lng: ".$opera_pos[0][44]." - ".$opera_pos[0][45], null);
-                //fuori dall'area, posso salvare 
-            
+                //fuori dall'area, posso salvare             
                 $newID = uniqid();
 
                 $id = hexdec( uniqid() );
 
-                db_perform_action("INSERT INTO beniCulturali (Id, Longitudine, Latitudine)
+                db_perform_action("INSERT INTO musei (Id, Longitudine, Latitudine)
                 VALUES($id, $current_lng, $current_lat)");   
 
                 telegram_send_message($chat_id, 'Una nuova posizione è stata inserita', null);
@@ -140,7 +147,7 @@ else if (isset($message['text'])) {
             telegram_send_message($chat_id, 'Devi inviare la tua posizione prima di poter salvare', null);
     }
 
-    else if (strpos($text, "dipinto") === 9){
+    else if (strpos($text, "d'arte") === 15){
 
             //estrapola la posizione dell'utente
             $pos = db_table_query("SELECT * FROM current_pos WHERE Id = 
@@ -157,54 +164,33 @@ else if (isset($message['text'])) {
                 $nearby = db_table_query("SELECT *, 
                 SQRT(POW($lat - Latitudine, 2) + POW($lng - Longitudine, 2)) 
                 AS distance
-                FROM beniCulturali
+                FROM musei
                 ORDER BY distance ASC
                 LIMIT 1");  
 
-                $nn = $nearby[0][5];
+                $museo_vicino = $nearby[0][0];
 
                 //controlla di essere nel raggio (200m) di un opera
-                if (($lat >= $nearby[0][44]+0.001 && $lat <= $nearby[0][44]-0.001) && 
-                    ($lng >= $nearby[0][45]+0.001 && $lng <= $nearby[0][45]-0.001)) {
+                if (($lat >= $nearby[0][13]+0.001 && $lat <= $nearby[0][13]-0.001) && 
+                    ($lng >= $nearby[0][14]+0.001 && $lng <= $nearby[0][14]-0.001)) {
 
                         //se non è nel raggio
-                        telegram_send_message($chat_id, 'Devi essere vicino a un opera per effettuare modifiche', null);
+                        telegram_send_message($chat_id, 'Devi essere nel raggio di un opera per poter effettuare modifiche', null);
                 }
                 //se è nel raggio
                 else {
 
-                    //seleziona l'opera in questione
-                    $idOpera = db_table_query("SELECT Id FROM beniCulturali WHERE Latitudine BETWEEN
-                                  $lat - 0.001 AND $lat + 0.001 AND Longitudine BETWEEN
-                                  $lng - 0.001 AND $lng + 0.001 LIMIT 1");
-              
-              $nearby[0] = 1;
-              telegram_send_message($chat_id, "ID = $nn", null);
+                    if ($nearby[0][20] == 0 && $nearby[0][21] == 0 && $nearby[0][22] == 0)
+                    {   
+                        //aggiunge presenza di un dipinto nel db
+                        db_perform_action("UPDATE musei SET Arte = 1 WHERE Id = $museo_vicino ");
 
-                    //validazione
-                   // $val = db_table_query("SELECT Gpl FROM beniCulturali WHERE Id = $bene");
-
-
-
-                   /* $val = db_table_query("SELECT CASE
-                                                WHEN Gpl = 'true' AND Id = $bene
-                                                    THEN 1
-                                                WHEN Gpl = 'false' AND Id = $bene
-                                                    THEN 0
-                                            END
-                                            FROM beniCulturali");    */
-
-                 /*   if($val[0][46] == 'true' || $tipo != null)
-                        telegram_send_message($chat_id, 'Un dipinto è già stato inserito', null);    
-                    
-                    else if($val[0][46] == 'false') {
-                        db_perform_action("UPDATE beniCulturali SET Dipinto = true WHERE Id = $bene");
-                    
-                        telegram_send_message($chat_id, 'Hai aggiunto un nuovo dipinto', null);
+                        telegram_send_message($chat_id, 'Hai aggiunto il dettaglio museo di arte', null);
                     }
-
+                    else if ($nearby[0][20] == 1)                     
+                        telegram_send_message($chat_id, 'Il dettaglio museo di arte è già stato inserito', null);
                     else
-                    telegram_send_message($chat_id, 'Problemi presenti nel DB', null);  */
+                    telegram_send_message($chat_id, 'Un dettaglio per questo museo opera è già presente...', null);
                 }                
             }
             //posizione non trovata 
@@ -212,14 +198,105 @@ else if (isset($message['text'])) {
                 telegram_send_message($chat_id, 'Devi mandare prima le tue coordinate', null);
     }
     
-    else if (strpos($text, "scultura") === 9){
+    else if (strpos($text, "storico") === 15){
 
+            //estrapola la posizione dell'utente
+            $pos = db_table_query("SELECT * FROM current_pos WHERE Id = 
+            $from_id");
+        
+            //se l'utente ha segnalato la sua posizione
+            if (count($pos) >= 1) {
+                    
+                //copia le coordinate
+                $lat = $pos[0][1];
+                $lng = $pos[0][2];
+        
+                //estrae la locazione piu' vicina all'utente corrente
+                $nearby = db_table_query("SELECT *, 
+                SQRT(POW($lat - Latitudine, 2) + POW($lng - Longitudine, 2)) 
+                AS distance
+                FROM musei
+                ORDER BY distance ASC
+                LIMIT 1");  
 
+                $museo_vicino = $nearby[0][5];
+
+                //controlla di essere nel raggio (200m) di un opera
+                if (($lat >= $nearby[0][13]+0.001 && $lat <= $nearby[0][13]-0.001) && 
+                    ($lng >= $nearby[0][14]+0.001 && $lng <= $nearby[0][14]-0.001)) {
+
+                        //se non è nel raggio
+                        telegram_send_message($chat_id, 'Devi essere nel raggio di un opera per poter effettuare modifiche', null);
+                }
+                //se è nel raggio
+                else {
+
+                    if ($nearby[0][20] == 0 && $nearby[0][21] == 0 && $nearby[0][22] == 0)
+                    {   
+                        //aggiunge presenza di un dipinto nel db
+                        db_perform_action("UPDATE musei SET Storia = 1 WHERE Id = $museo_vicino ");
+
+                        telegram_send_message($chat_id, 'Hai aggiunto il dettaglio museo storico', null);
+                    }
+                    else if ($nearby[0][21] == 1)                     
+                        telegram_send_message($chat_id, 'Il dettaglio museo storico è già stato inserito', null);
+                    else
+                        telegram_send_message($chat_id, 'Un dettaglio per questo museo è già presente...', null);
+                }                
+            }
+            //posizione non trovata 
+            else
+                telegram_send_message($chat_id, 'Devi mandare prima le tue coordinate', null);
     }
 
     else if (strpos($text, "altro") === 9){
+            //estrapola la posizione dell'utente
+            $pos = db_table_query("SELECT * FROM current_pos WHERE Id = 
+            $from_id");
+        
+            //se l'utente ha segnalato la sua posizione
+            if (count($pos) >= 1) {
+                    
+                //copia le coordinate
+                $lat = $pos[0][1];
+                $lng = $pos[0][2];
+        
+                //estrae la locazione piu' vicina all'utente corrente
+                $nearby = db_table_query("SELECT *, 
+                SQRT(POW($lat - Latitudine, 2) + POW($lng - Longitudine, 2)) 
+                AS distance
+                FROM musei
+                ORDER BY distance ASC
+                LIMIT 1");  
 
+                $museo_vicino = $nearby[0][0];
 
+                //controlla di essere nel raggio (200m) di un opera
+                if (($lat >= $nearby[0][13]+0.001 && $lat <= $nearby[0][13]-0.001) && 
+                    ($lng >= $nearby[0][14]+0.001 && $lng <= $nearby[0][14]-0.001)) {
+
+                        //se non è nel raggio
+                        telegram_send_message($chat_id, 'Devi essere nel raggio di un opera per poter effettuare modifiche', null);
+                }
+                //se è nel raggio
+                else {
+
+                    if ($nearby[0][20] == 0 && $nearby[0][21] == 0 && $nearby[0][22] == 0)
+                    {   
+                        //aggiunge presenza di un dipinto nel db
+                        db_perform_action("UPDATE musei SET Altro = 1 WHERE Id = $museo_vicino ");
+
+                        telegram_send_message($chat_id, 'Hai aggiunto il dettaglio "Altro"', null);
+                    }
+                    else if ($nearby[0][22] == 1)                     
+                        telegram_send_message($chat_id, 'Il dettaglio "Altro" è già stato inserito', null);
+                    else
+                    telegram_send_message($chat_id, 'Un dettaglio per questo museo è già presente...', null);
+                }                
+            }
+            //posizione non trovata 
+            else
+                telegram_send_message($chat_id, 'Devi mandare prima le tue coordinate', null);
     }
 
     else
@@ -238,7 +315,7 @@ else if (isset($message['text'])) {
 
         $voto = intval( substr($text, 6) );
 
-        //Estrae tutte le posizioni dal db, dove la colonna user_id assume
+        //Estrae tutte le posizioni dal db, dove la colomuseo_vicinoa user_id assume
         //l'id dell'utente che sta conversando
         $pos = db_table_query("SELECT * FROM current_position WHERE user_id = 
         $from_id");

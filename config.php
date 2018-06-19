@@ -14,7 +14,7 @@ define('TELEGRAM_FILE_API_URI_BASE', 'https://api.telegram.org/file/bot' . TELEG
 // Optional configuration: fill in if you use a MySQL database
 // and make use of the library functions in lib_database.php
 define('DATABASE_HOST', 'localhost');
-define('DATABASE_NAME', 'pit-Bot_db');
+define('DATABASE_NAME', 'Bot-Ticelli_db');
 define('DATABASE_USERNAME', 'root');
 define('DATABASE_PASSWORD', 'root');
 
