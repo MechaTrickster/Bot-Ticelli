@@ -1,3 +1,59 @@
+# Corso di Piattaforme Digitali per la Gestione del Territorio
+
+## Sessione Estiva A.A. 2017/2018
+
+# Progetto: "Bot-Ticelli"
+
+## Studenti:
+#### Alessandro Commodaro [MAT. 274065]      GitHub: MechaTrickster
+#### Daniele Commodaro [MAT. 267250]         GitHub: pankake
+
+# Introduzione
+Il "Bot-Ticelli" è un bot dell'applicazione Telegram il cui scopo consiste nel facilitare la scoperta dei musei di tutto il nostro paese a chiunque voglia approfondire il proprio bagaglio culturale sul patrimonio artistico e/o storico della nostra penisola. Le sue funzionalità prevedono l'invio della posizione del'esposizione più vicina all'utente interessato, grazie alle coordinate gps salvate su un Data Base opportunamente creato. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Telegram Bot Sample
 
 Simple Telegram bot backend template, written in PHP.
