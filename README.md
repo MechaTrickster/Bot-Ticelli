@@ -12,8 +12,21 @@
 Il "Bot-Ticelli" è un bot dell'applicazione Telegram il cui scopo consiste nel facilitare la scoperta dei musei di tutto il nostro paese a chiunque voglia approfondire il proprio bagaglio culturale sul patrimonio artistico e/o storico della nostra penisola. Le sue funzionalità prevedono l'invio della posizione del'esposizione più vicina all'utente interessato, grazie alle coordinate gps salvate su un Data Base opportunamente creato. Inoltre, dal momento che non saranno presenti tutti i musei d'Italia sin dai primi momenti, agli utento è permesso di aggiungerne tramite acquisizione e salvataggio della sua posizione, consentendo all'applicazione di rimanere aggiornata anche in futuro.
 
 # Struttura
-Tramite Telegram, l'utente può interagire con il "Bot-Ticelli" grazie ad alcuni pulsanti, appositamente creati con l'ausilio del software Postman, i quali non fanno altro che replicare, in maniera più immediata, i messaggi di testo riconosciuti dal bot, ovvero:
-* **/Cerca:** 
+Tramite Telegram, l'utente può interagire con il "Bot-Ticelli" inviando la propria posizione, la quale viene salvata nel Data Base per ogni utente ed è utilizzata dal "Bot-Ticelli" per trovare il museo più vicino ad essa o per salvarne uno nuovo. 
+```inserire codice di SALVATAGGIO POSIZIONE UTENTE```
+In seguito all'invio delle proprie coordinate è possibile utilizzare i comandi messi a disposizione dal bot senza problemi e resi più immediati da appositi pulsanti realizzati con il software Postman. Questi tasti evitano di dover inserire manualmente le istruzioni per accedere alle funzionalità del bot.
+### /Cerca:
+
+Con questa opzione si chiede al bot di visualizzare il museo più vicino, il quale risponde mostrando una piccola mappa che riporta il luogo d'interesse e la sua tipologia, o, nel caso non fosse stata inviata, la richiesta della posizione all'utente.
+
+### /Cerca il prossimo museo:
+
+Questa opzione serve per chiedere al bot di visualizzare i musei successivi al primo mostrato col comando **/Cerca**, uno per volta, in ordine di distanza, basandosi sulla prima posizione registrata.
+```inserire codice di CERCA e CERCA IL PROSSIMO```
+
+### /Salva:
+Questo è il comando per chiedere al bot di salvare nel Data Base la posizione inviata dall'utente al fine di registrare un nuovo museo non presente. Nel caso in cui l'edificio sia già stato inserito, il bot risponderà che è già presente, basandosi 
+
 
 
 
