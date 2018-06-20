@@ -13,7 +13,7 @@ Il "Bot-Ticelli" è un bot dell'applicazione Telegram il cui scopo consiste nel 
 
 # Struttura
 Tramite Telegram, l'utente può interagire con il "Bot-Ticelli" grazie ad alcuni pulsanti, appositamente creati con l'ausilio del software Postman, i quali non fanno altro che replicare, in maniera più immediata, i messaggi di testo riconosciuti dal bot, ovvero:
-
+* **/Cerca:** 
 
 
 
