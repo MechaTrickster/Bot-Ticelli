@@ -37,7 +37,60 @@ $message_id = $message['message_id'];
 $chat_id = $message['chat']['id'];
 $from_id = $message['from']['id'];
 
-$museo_vicino = 0;
+$museo_vicino = 0;   //contiene il museo piu' vicino alla propria posizione
+$i;                  //utilizzata per scorrere i musei
+$token;              //token dell'utente
+
+//validazione
+
+//estrae l'utente in questione dalla tabella utenti
+$utente = db_table_query("SELECT * FROM utenti WHERE Id = $from_id");
+
+//controlla se l'utente in questione è già noto
+if ($utente == NULL )
+{
+    //utente non conosciuto
+
+    //niente token quindi viene generato    
+    $token = hexdec( uniqid() );
+
+    telegram_send_message($chat_id, 'Salute visitatore, il Bot-Ticelli ti augura un caldo benvenuto! ', null);
+    
+    telegram_send_message($chat_id, 'Il tuo codice autorizzativo è: '.$token, null);
+
+    telegram_send_message($chat_id, 'Il Bot-Ticelli ricorda che occorre inviare il proprio codice autorizzativo prima di poter effettuare modifiche', null);
+
+    //salva il token nel db
+    db_perform_action("INSERT INTO utenti (Id, Token, Autenticato)
+                       VALUES($from_id, $token, 0)");
+}
+else
+{
+    //utente conosciuto, presente nel db
+
+    //inserisce la data odierna
+    db_perform_action("UPDATE utenti SET Data = CURRENT_DATE WHERE Id = $from_id");
+    
+    $token = $utente[0][1];
+
+    //db_perform_action("UPDATE utenti SET Autenticato = 1 WHERE Id = $from_id ");
+    
+    if ($utente[0][2] < 1)
+    {
+        //se l'user non è autenticato
+    }
+
+    else
+    {
+        //user già autenticato può fare modifiche
+        
+        //autenticazione valida solo per il giorno corrente
+        if ($utente[0][3] != date('Y-m-d'))
+        {
+            db_perform_action("UPDATE utenti SET Autenticato = 0 WHERE Id = $from_id"); 
+        }
+    }
+}
 
 //se viene inviata la posizione
 if (isset($message['location'])) {
@@ -78,15 +131,30 @@ else if (isset($message['text'])) {
             ORDER BY distance ASC
             ");
 
-            telegram_send_location($chat_id, $nearby[0][13], $nearby[0][14]);
-            telegram_send_message($chat_id, 'Questa è la location a te più vicina', null);
-            if ($nearby[0][11] != NULL)
-                telegram_send_message($chat_id, "Museo di ".$nearby[0][11], null);
-            else if ($nearby[0][20] > 0)
+            //se cerca il museo successivo
+            if (strpos($text, "il prossimo museo") === 6)
+            {
+                $i = db_scalar_query("SELECT count FROM current_pos WHERE Id = $from_id");                
+                $i++;
+                db_perform_action("UPDATE current_pos SET count = $i WHERE Id = $from_id");                          
+            }
+            else
+            {
+                $i = 0;
+                db_perform_action("UPDATE current_pos SET count = 0 WHERE Id = $from_id");
+            }
+
+                
+
+            telegram_send_location($chat_id, $nearby[$i][13], $nearby[$i][14]);
+            telegram_send_message($chat_id, 'Questo è il luogo a te più vicino', null);
+            if ($nearby[$i][11] != NULL)
+                telegram_send_message($chat_id, "Museo di ".$nearby[$i][11], null);
+            else if ($nearby[$i][20] > 0)
                 telegram_send_message($chat_id, "Museo di "."arte", null);
-            else if ($nearby[0][21] > 0)
+            else if ($nearby[$i][21] > 0)
                 telegram_send_message($chat_id, "Museo di "."storia", null);
-            else if ($nearby[0][22] > 0)
+            else if ($nearby[$i][22] > 0)
                 telegram_send_message($chat_id, "Museo di "."altro tipo", null);
             else
                 telegram_send_message($chat_id,'Il tipo di museo non è stato specificato', null);
@@ -97,13 +165,17 @@ else if (isset($message['text'])) {
             telegram_send_message($chat_id, 'Devi mandare prima le tue coordinate', null);
     }
 
+    else if ((strpos($text, "Salva") === 0) && ($utente[0][2] < 1) )
+        telegram_send_message($chat_id, 'Mi dispiace ma ho prima bisogno del tuo codice!', null);
+
     //salva una nuova posizione
     else if (strpos($text, "Salva") === 0) {
 
         //estrae l'id dalla tabella 'current_position'
         $current = db_table_query("SELECT * FROM current_pos WHERE Id = $from_id");
 
-        //se l'id utente trova corrispondenza nella tabella 'current_position' 
+        //se l'id utente trova corrispondenza nella tabella 'current_position'
+        //allora l'utente ha inviato la sua posizione
         if ($current[0][0] != 0) {
             
             //copia latitudine 
@@ -130,9 +202,7 @@ else if (isset($message['text'])) {
                     telegram_send_message($chat_id, 'Questo museo è già stato inserito!', null);
             else {
 
-                //fuori dall'area, posso salvare             
-                $newID = uniqid();
-
+                //fuori dall'area, posso salvare
                 $id = hexdec( uniqid() );
 
                 db_perform_action("INSERT INTO musei (Id, Longitudine, Latitudine)
@@ -146,6 +216,8 @@ else if (isset($message['text'])) {
         else
             telegram_send_message($chat_id, 'Devi inviare la tua posizione prima di poter salvare', null);
     }
+    else if ((strpos($text, "d'arte") === 15) && ($utente[0][2] < 1) )
+        telegram_send_message($chat_id, 'Mi dispiace ma ho prima bisogno del tuo codice!', null);
 
     else if (strpos($text, "d'arte") === 15){
 
@@ -175,7 +247,7 @@ else if (isset($message['text'])) {
                     ($lng >= $nearby[0][14]+0.001 && $lng <= $nearby[0][14]-0.001)) {
 
                         //se non è nel raggio
-                        telegram_send_message($chat_id, 'Devi essere nel raggio di un opera per poter effettuare modifiche', null);
+                        telegram_send_message($chat_id, 'Devi essere nel raggio di un museo per poter effettuare modifiche', null);
                 }
                 //se è nel raggio
                 else {
@@ -197,6 +269,8 @@ else if (isset($message['text'])) {
             else
                 telegram_send_message($chat_id, 'Devi mandare prima le tue coordinate', null);
     }
+    else if ((strpos($text, "storico") === 15) && ($utente[0][2] < 1) )
+        telegram_send_message($chat_id, 'Mi dispiace ma ho prima bisogno del tuo codice!', null);
     
     else if (strpos($text, "storico") === 15){
 
@@ -226,7 +300,7 @@ else if (isset($message['text'])) {
                     ($lng >= $nearby[0][14]+0.001 && $lng <= $nearby[0][14]-0.001)) {
 
                         //se non è nel raggio
-                        telegram_send_message($chat_id, 'Devi essere nel raggio di un opera per poter effettuare modifiche', null);
+                        telegram_send_message($chat_id, 'Devi essere nel raggio di un museo per poter effettuare modifiche', null);
                 }
                 //se è nel raggio
                 else {
@@ -248,6 +322,8 @@ else if (isset($message['text'])) {
             else
                 telegram_send_message($chat_id, 'Devi mandare prima le tue coordinate', null);
     }
+    else if ((strpos($text, "altro") === 9) && ($utente[0][2] < 1) )
+        telegram_send_message($chat_id, 'Mi dispiace ma ho prima bisogno del tuo codice!', null);
 
     else if (strpos($text, "altro") === 9){
             //estrapola la posizione dell'utente
@@ -299,66 +375,35 @@ else if (isset($message['text'])) {
                 telegram_send_message($chat_id, 'Devi mandare prima le tue coordinate', null);
     }
 
+    else if ((strpos($text, "Reinvio del token") === 0))
+    {
+            telegram_send_message($chat_id, 'Hai bisogno del tuo codice autorizzativo?', null);
+            telegram_send_message($chat_id, 'Ci pensa il Bot-Ticelli', null);
+            telegram_send_message($chat_id, 'Ed eccolo lì: '.$token, null);
+    }
+
+    else if (is_numeric($message['text']))
+    {
+        telegram_send_message($chat_id, 'Controllo subito questo token...', null);
+
+        if(strcmp($message['text'], $token) == 0)
+        {
+            if ($utente[0][2] != 1)
+            {
+                telegram_send_message($chat_id, 'Autenticazione avvenuta con successo', null);  
+                db_perform_action("UPDATE utenti SET Autenticato = 1 WHERE Id = $from_id ");
+            }
+            else
+                telegram_send_message($chat_id, 'Ma... quante volte vuoi autenticarti!?', null);
+        }
+        else
+            telegram_send_message($chat_id, 'Attenzione autenticazione fallita, il codice inserito non corrisponde', null);   
+    }
     else
         telegram_send_message($chat_id, 'Non conosco questo comando', null);
 
-/*  if (strpos($text, "/start") === 0) {
-        //Start command
-
-       // telegram_send_message($chat_id, 'Ciao! Il sondaggio di oggi è: quant\'è blu il cielo? Vota col comando /vote seguito da un numero da 1 a 5', null);
-
-        echo 'Received /start command!' . PHP_EOL;
-    }
-    else if (strpos($text, "/vote") === 0) {
-        //Vote command        
-        echo 'Received /start command!' . PHP_EOL;
-
-        $voto = intval( substr($text, 6) );
-
-        //Estrae tutte le posizioni dal db, dove la colomuseo_vicinoa user_id assume
-        //l'id dell'utente che sta conversando
-        $pos = db_table_query("SELECT * FROM current_position WHERE user_id = 
-        $from_id");
-
-        //Se la posizione è almeno una
-        if(count($pos) >= 1) {
-            //Posizione trovata
-            $lat = $pos[0][1];
-            $lng = $pos[0][2];
-
-            db_perform_action("REPLACE INTO votes VALUES($from_id, '$voto', 
-            NOW(), $lat, $lng)");
-
-            telegram_send_message($chat_id, "Voto registrato!");
-        }
-        else {
-            //Psizione non trovata
-            telegram_send_message($chat_id, "Inviami la tua posizione prima
-            di votare!");
-        }
-
-        
-    }
-
-    else if (strpos($text, "/results") === 0) {
-        $media = db_scalar_query("SELECT AVG(vote) FROM votes");
-
-        $voti = db_table_query("SELECT vote, COUNT(*) FROM votes GROUP BY vote");
-
-        $risposta = "Voti: ";
-        foreach($voti as $voto => $conteggio) {
-            $risposta .= $conteggio[0] . "(" . $conteggio[1] . ")";         
-        }
-
-        telegram_send_message($chat_id, "$risposta la media dei voti è $media", null);
-    }
-    else {
-        echo "Received message: $text" . PHP_EOL;
-
-        // Do something else...
-    }   */
 }
 else {
-    telegram_send_message($chat_id, 'Sorry, I understand only text messages at the moment!');
+    telegram_send_message($chat_id, 'Scusa ma il Bot-Ticelli non riesce a comprendere');
 }
 ?>
