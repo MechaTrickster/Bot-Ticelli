@@ -5,46 +5,14 @@
 # Progetto: "Bot-Ticelli"
 
 ## Studenti:
-#### Alessandro Commodaro [MAT. 274065]      GitHub: MechaTrickster
-#### Daniele Commodaro [MAT. 267250]         GitHub: pankake
+#### *Alessandro Commodaro [MAT. 274065]      GitHub: MechaTrickster*
+#### *Daniele Commodaro [MAT. 267250]         GitHub: pankake*
 
 # Introduzione
-Il "Bot-Ticelli" è un bot dell'applicazione Telegram il cui scopo consiste nel facilitare la scoperta dei musei di tutto il nostro paese a chiunque voglia approfondire il proprio bagaglio culturale sul patrimonio artistico e/o storico della nostra penisola. Le sue funzionalità prevedono l'invio della posizione del'esposizione più vicina all'utente interessato, grazie alle coordinate gps salvate su un Data Base opportunamente creato. 
+Il "Bot-Ticelli" è un bot dell'applicazione Telegram il cui scopo consiste nel facilitare la scoperta dei musei di tutto il nostro paese a chiunque voglia approfondire il proprio bagaglio culturale sul patrimonio artistico e/o storico della nostra penisola. Le sue funzionalità prevedono l'invio della posizione del'esposizione più vicina all'utente interessato, grazie alle coordinate gps salvate su un Data Base opportunamente creato. Inoltre, dal momento che non saranno presenti tutti i musei d'Italia sin dai primi momenti, agli utento è permesso di aggiungerne tramite acquisizione e salvataggio della sua posizione, consentendo all'applicazione di rimanere aggiornata anche in futuro.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Struttura
+Tramite Telegram, l'utente può interagire con il "Bot-Ticelli" grazie ad alcuni pulsanti, appositamente creati con l'ausilio del software Postman, i quali non fanno altro che replicare, in maniera più immediata, i messaggi di testo riconosciuti dal bot, ovvero:
 
 
 
