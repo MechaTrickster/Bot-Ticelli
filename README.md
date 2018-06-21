@@ -14,9 +14,20 @@ Il "Bot-Ticelli" è un'applicazione sviluppata per piattaforma Telegram, il cui 
 # Struttura
 Tramite Telegram, l'utente può interagire con il "Bot-Ticelli" inviando la propria posizione, la quale viene salvata nel Data Base così da poter essere utilizzata per trovare il museo più vicino ad essa o per salvarne uno nuovo. 
 
-```inserire codice di SALVATAGGIO POSIZIONE UTENTE```
+```//se viene inviata la posizione
+if (isset($message['location'])) {
+    $lat = $message['location']['latitude'];
+    $lng = $message['location']['longitude'];
 
-In seguito all'invio delle proprie coordinate è possibile utilizzare i comandi messi a disposizione dal bot senza problemi e resi più immediati da appositi pulsanti realizzati con il software Postman. Questi tasti evitano di dover inserire manualmente le istruzioni per accedere alle funzionalità del bot.
+    //inserisce i dati nella tabella 'current_position'
+    db_perform_action("REPLACE INTO current_pos VALUES($chat_id, $lat,
+    $lng)");
+
+    echo "Utente $from_id in $lat,$lng" . PHP_EOL;
+}
+```
+
+L'invio delle proprie coordinate viene eseguito sfruttando la funzionalità di invio della posizione già presente in telegram, tutte le altre funzionalità vengono rese disponibili attraverso l'utilizzo di pulsanti generati attraversi il client "Postman". Accorpare i vari comandi in pulsanti permette una comprensione immediata di quello che il "Bot-Ticelli" è realmente in grado di fare, oltre a questo chiaramente si evita di dover immettere manualmente l'intera stringa che compone il comando. 
 
 ## Funzionalità
 
@@ -26,7 +37,7 @@ Con questa opzione si chiede al bot di visualizzare il museo più vicino, il qua
 
 ### /Cerca il prossimo museo:
 
-Questa opzione serve per chiedere al bot di visualizzare i musei successivi al primo mostrato col comando **/Cerca**, uno per volta, in ordine di distanza, basandosi sulla prima posizione registrata. Lo scorrimento delle gallerie avviene tramite una variabile contenente il valore di un contatore all'interno del Data Base e legato all'utente. Nel caso in cui venga usato questo comando, la variabile viene incrementata scorrendo di un posto la lista ordinata di musei provenienti dalla query sql introdotta nel passaggio precedente. Ad ogni nuovo luogo visualizzato, il contatore del Data Base viene aggiornato, finchè l'utente non utilizzerà il comando base */Cerca*, da cui segue l'azzeramento della variabile, e quindi del contatore. La posizione dell'utente all'interno del Data Base rimane sempre quella di partenza, ma in questo modo è possibile visualizzare tutte le mostre nelle vicinanze.
+Questa opzione serve per chiedere al bot di visualizzare il museo successivo a quello già visitato, mostrato col comando **/Cerca**, uno per volta, in ordine di distanza, basandosi sulla prima posizione registrata. Lo scorrimento delle gallerie avviene tramite una variabile contatore adibita all'indicizzazione dei record, contenuta all'interno del Data Base e legata all'utente. Nel caso in cui venga usato questo comando, la variabile viene incrementata scorrendo di un posto la lista ordinata di musei provenienti dalla query introdotta nel passaggio precedente. Ad ogni nuovo luogo visualizzato, il contatore del Data Base viene aggiornato, finchè l'utente non utilizzerà il comando base */Cerca*, da cui segue l'azzeramento della variabile, e quindi del contatore. La posizione dell'utente all'interno della base di dati rimane sempre quella di partenza, ma in questo modo è possibile visualizzare tutte le mostre nelle vicinanze.
 
 ```inserire codice di CERCA e CERCA IL PROSSIMO```
 
