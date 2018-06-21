@@ -1,3 +1,58 @@
+# Corso di Piattaforme Digitali per la Gestione del Territorio
+
+## Sessione Estiva A.A. 2017/2018
+
+# Progetto: "Bot-Ticelli"
+
+## Studenti:
+#### *Alessandro Commodaro [MAT. 274065]      GitHub: MechaTrickster*
+#### *Daniele Commodaro [MAT. 267250]         GitHub: pankake*
+
+# Introduzione
+Il "Bot-Ticelli" è un bot dell'applicazione Telegram il cui scopo consiste nel facilitare la scoperta dei musei di tutto il nostro paese a chiunque voglia approfondire il proprio bagaglio culturale sul patrimonio artistico e/o storico della nostra penisola. Le sue funzionalità prevedono l'invio della posizione del'esposizione più vicina all'utente interessato, grazie alle coordinate gps salvate su un Data Base opportunamente creato. Inoltre, dal momento che non saranno presenti tutti i musei d'Italia sin dai primi momenti, agli utento è permesso di aggiungerne tramite acquisizione e salvataggio della sua posizione, consentendo all'applicazione di rimanere aggiornata anche in futuro.
+
+# Struttura
+Tramite Telegram, l'utente può interagire con il "Bot-Ticelli" inviando la propria posizione, la quale viene salvata nel Data Base per ogni utente ed è utilizzata dal "Bot-Ticelli" per trovare il museo più vicino ad essa o per salvarne uno nuovo. 
+
+```inserire codice di SALVATAGGIO POSIZIONE UTENTE```
+
+In seguito all'invio delle proprie coordinate è possibile utilizzare i comandi messi a disposizione dal bot senza problemi e resi più immediati da appositi pulsanti realizzati con il software Postman. Questi tasti evitano di dover inserire manualmente le istruzioni per accedere alle funzionalità del bot.
+
+## Funzionalità
+
+### /Cerca:
+
+Con questa opzione si chiede al bot di visualizzare il museo più vicino, il quale risponde mostrando una piccola mappa che riporta il luogo d'interesse e la sua tipologia, o, nel caso non fosse stata inviata, la richiesta della posizione all'utente. La galleria viene scelta dal Data Base grazie ad una query sql che prevede l'utilizzo del "Teorema di Pitagora" per calcolare le distanze tra la posizione dell'utente e quella dei musei. In base a queste, le mostre vengono poi ordinate dalla più vicina e viene selezionata quella interessata, cioè la prima. 
+
+### /Cerca il prossimo museo:
+
+Questa opzione serve per chiedere al bot di visualizzare i musei successivi al primo mostrato col comando **/Cerca**, uno per volta, in ordine di distanza, basandosi sulla prima posizione registrata. Lo scorrimento delle gallerie avviene tramite una variabile contenente il valore di un contatore all'interno del Data Base e legato all'utente. Nel caso in cui venga usato questo comando, la variabile viene incrementata scorrendo di un posto la lista ordinata di musei provenienti dalla query sql introdotta nel passaggio precedente. Ad ogni nuovo luogo visualizzato, il contatore del Data Base viene aggiornato, finchè l'utente non utilizzerà il comando base */Cerca*, da cui segue l'azzeramento della variabile, e quindi del contatore. La posizione dell'utente all'interno del Data Base rimane sempre quella di partenza, ma in questo modo è possibile visualizzare tutte le mostre nelle vicinanze.
+
+```inserire codice di CERCA e CERCA IL PROSSIMO```
+
+### /Salva:
+Questo è il comando per chiedere al bot di salvare nel Data Base la posizione inviata dall'utente al fine di registrare un nuovo museo non presente. Nel caso in cui l'edificio sia già stato inserito, il bot risponderà che è già presente, dopo aver calcolato l'area del museo più vicino e verificato che la posizione dell'utente vi rientri. Il nuovo museo inserito verrà trattato come ogni altro, quindi potrebbe venire segnalato ad un altro utente vicino, in seguito al comando */Cerca*.
+
+```inserire codice di SALVA```
+
+### /Aggiungi museo d'arte/Aggingi museo storico/Aggiungi altro museo:
+
+All'interno del Data Base ogni museo è dotato di 3 campi riportanti un intero, 0 o 1, il cui scopo è di segnalarne la tipologia, cioè se si tratta di una mostra artistica, storica o di altra materia. Ogni nuovo museo avrà tutti i campi sullo 0 e lo scopo di questo comando è di impostare ad 1 il campo che l'utente ha scelto per descrivere la tipologia della galleria in esame. Ogni museo può avere un solo campo su 1, quindi nelle circostanze in cui un utente usi il comando su un edificio già provvisto di campo, il bot risponde che il dettaglio è già presente. In circostanze normali, in cui la tipologia non sia definita, il bot eseguirà nuovamente il calcolo dell'area della mostra più vicina, per verificare che la posizione dell'utente sia effettivamente nelle sue vicinanze. Al termine dell'operazione il bot confermerà l'avvenuta operazione ed il nuovo campo inserito mostrerà la tipologia del museo a qualunque utente esegua il comando */Cerca*.
+
+```inserire codice di AGGIUNGI TIPOLOGIA MUSEO```
+
+## Validazione
+
+
+
+# Conclusione
+
+
+
+
+
+
+
 # Telegram Bot Sample
 
 Simple Telegram bot backend template, written in PHP.
