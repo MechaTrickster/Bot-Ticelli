@@ -315,7 +315,7 @@ else if (strpos($text, "d'arte") === 15){
 ```
 
 ## Validazione
-
+Per il processo validativo si è optato per un'implementazione interamente in linguaggio php. Si precisa che per validazione si intende l'atto di autenticarsi al "Bot-Ticelli", al fine di poter modificare la base di dati già esistente. Tale processo non coinvolgerà le funzioni di ricerca, bensì deve essere limitato a quelle operazioni che implicano delle modifiche.
 
 
 # Conclusione
