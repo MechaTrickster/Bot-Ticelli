@@ -1,0 +1,3 @@
+
+
+https://api.telegram.org/bot547583786:AAGQJ5wRGKcvXS7ifVuPAu0iXHh_89R7wIE/sendMessage?chat_id=199301498&text=Benvenuto&reply_markup={"keyboard":[["Cerca"],["Cerca il prossimo museo"],["Salva"],["Aggiungi museo d'arte "],["Aggiungi museo storico"],["Aggiungi altro museo"],["Reinvio del token"]],"resize_keyboard":true}
