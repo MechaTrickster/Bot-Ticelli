@@ -319,7 +319,7 @@ else if (strpos($text, "d'arte") === 15){
 
 
 # Conclusione
-
+I vantaggi derivanti dall'utilizzo del "Bot-Ticelli" sono molteplici, dall'esaltazione del nostro patrimonio artistico, storico e culturale, all'utilizzo di un dataset che non solo evita di essere compromesso ma che può essere bensì arricchito semplicemente grazie all'utilizzo dell'applicazione da parte di ogni singolo user. Di più, grazie alla funzionalità che mette in mostra il luogo di interesse più vicino escludento quelli già visitati, viene stabilito una specie di itinerario che guida ed assiste il visitatore e al tempo stesso crea un percorso di viaggio ottimale, riducendo così gli spostamenti inutili, con tutti i vantaggi che ne conseguono (riduzione del traffico, delle emissioni, ecc...). Possiamo quindi constatare che il "Bot-Ticelli", oltre ad essere dotato di un certo sharm, risulta anche essere un più che valido ed affidabile assistente di viaggio.
 
 
 
