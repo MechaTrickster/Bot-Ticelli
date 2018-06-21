@@ -325,7 +325,6 @@ I vantaggi derivanti dall'utilizzo del "Bot-Ticelli" sono molteplici, dall'esalt
 
 
 
-
 # Telegram Bot Sample
 
 Simple Telegram bot backend template, written in PHP.
