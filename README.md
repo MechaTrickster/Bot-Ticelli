@@ -39,18 +39,280 @@ Con questa opzione si chiede al bot di visualizzare il museo più vicino, il qua
 
 Questa opzione serve per chiedere al bot di visualizzare il museo successivo a quello già visitato, mostrato col comando **/Cerca**, uno per volta, in ordine di distanza, basandosi sulla prima posizione registrata. Lo scorrimento delle gallerie avviene tramite una variabile contatore adibita all'indicizzazione dei record, contenuta all'interno del Data Base e legata all'utente. Nel caso in cui venga usato questo comando, la variabile viene incrementata scorrendo di un posto la lista ordinata di musei provenienti dalla query introdotta nel passaggio precedente. Ad ogni nuovo luogo visualizzato, il contatore del Data Base viene aggiornato, finchè l'utente non utilizzerà il comando base */Cerca*, da cui segue l'azzeramento della variabile, e quindi del contatore. La posizione dell'utente all'interno della base di dati rimane sempre quella di partenza, ma in questo modo è possibile visualizzare tutte le mostre nelle vicinanze.
 
-```inserire codice di CERCA e CERCA IL PROSSIMO```
+```
+//cerca la posizione più vicina
+    if (strpos($text, "Cerca") === 0) {
+ 
+        //estrapola la posizione dell'utente
+        $pos = db_table_query("SELECT * FROM current_pos WHERE Id = $from_id");
+
+        //se l'utente ha segnalato la sua posizione
+        if (count($pos) >= 1) {
+            
+            //copia le coordinate
+            $lat = $pos[0][1];
+            $lng = $pos[0][2];
+
+            //estrae la locazione piu' vicina all'utente corrente
+            
+            $nearby = db_table_query("SELECT *, 
+            SQRT(POW($lat - Latitudine, 2) + POW($lng - Longitudine, 2)) 
+            AS distance
+            FROM musei
+            ORDER BY distance ASC
+            ");
+
+            //se cerca il museo successivo
+            if (strpos($text, "il prossimo museo") === 6)
+            {
+                $i = db_scalar_query("SELECT count FROM current_pos WHERE Id = $from_id");                
+                $i++;
+                db_perform_action("UPDATE current_pos SET count = $i WHERE Id = $from_id");                          
+            }
+            else
+            {
+                $i = 0;
+                db_perform_action("UPDATE current_pos SET count = 0 WHERE Id = $from_id");
+            }
+
+                
+
+            telegram_send_location($chat_id, $nearby[$i][13], $nearby[$i][14]);
+            telegram_send_message($chat_id, 'Questo è il luogo a te più vicino', null);
+            if ($nearby[$i][11] != NULL)
+                telegram_send_message($chat_id, "Museo di ".$nearby[$i][11], null);
+            else if ($nearby[$i][20] > 0)
+                telegram_send_message($chat_id, "Museo di "."arte", null);
+            else if ($nearby[$i][21] > 0)
+                telegram_send_message($chat_id, "Museo di "."storia", null);
+            else if ($nearby[$i][22] > 0)
+                telegram_send_message($chat_id, "Museo di "."altro tipo", null);
+            else
+                telegram_send_message($chat_id,'Il tipo di museo non è stato specificato', null);
+        }
+
+        //posizione non trovata
+        else 
+            telegram_send_message($chat_id, 'Devi mandare prima le tue coordinate', null);
+    }
+```
+    
 
 ### /Salva:
-Questo è il comando per chiedere al bot di salvare nel Data Base la posizione inviata dall'utente al fine di registrare un nuovo museo non presente. Nel caso in cui l'edificio sia già stato inserito, il bot risponderà che è già presente, dopo aver calcolato l'area del museo più vicino e verificato che la posizione dell'utente vi rientri. Il nuovo museo inserito verrà trattato come ogni altro, quindi potrebbe venire segnalato ad un altro utente vicino, in seguito al comando */Cerca*.
+Questo è il comando per chiedere al bot di salvare nel Data Base la posizione inviata dall'utente al fine di registrare un nuovo museo non presente. Nel caso in cui l'edificio sia già stato inserito, il bot risponderà che è già presente, questo controllo validativo viene effettuato al fine di evitare di immettere più di una volta lo stesso edificio. Per farlo si controlla che la posizione effettiva dell'utente rientri o meno in un area di dimensione decisa staticamente (200m circa) . Il nuovo museo inserito verrà trattato come ogni altro, quindi potrebbe venire segnalato ad un altro utente vicino, in seguito al comando **/Cerca**.
 
-```inserire codice di SALVA```
+```
+//salva una nuova posizione
+    else if (strpos($text, "Salva") === 0) {
+
+        //estrae l'id dalla tabella 'current_position'
+        $current = db_table_query("SELECT * FROM current_pos WHERE Id = $from_id");
+
+        //se l'id utente trova corrispondenza nella tabella 'current_position'
+        //allora l'utente ha inviato la sua posizione
+        if ($current[0][0] != 0) {
+            
+            //copia latitudine 
+            $current_lat = db_scalar_query("SELECT Latitudine FROM current_pos WHERE Id = 
+                                            $from_id");
+            
+            //copia longitudine
+            $current_lng = db_scalar_query("SELECT Longitudine FROM current_pos WHERE Id = 
+                                            $from_id");
+
+            $opera_pos = db_table_query("SELECT *, 
+            SQRT(POW($current_lat - Latitudine, 2) + POW($current_lng - Longitudine, 2)) 
+            AS distance
+            FROM musei
+            ORDER BY distance ASC
+            LIMIT 1");
+
+            //se la posizione corrente rientra nell'intervallo di quella più vicina
+            //allora non viene consentito l'inserimento
+            if (($current_lat >= $opera_pos[0][13]-0.001 && $current_lat <= $opera_pos[0][13]+0.001) && 
+                ($current_lng >= $opera_pos[0][14]-0.001 && $current_lng <= $opera_pos[0][14]+0.001))
+
+                    //sono dentro l'area
+                    telegram_send_message($chat_id, 'Questo museo è già stato inserito!', null);
+            else {
+
+                //fuori dall'area, posso salvare
+                $id = hexdec( uniqid() );
+
+                db_perform_action("INSERT INTO musei (Id, Longitudine, Latitudine)
+                VALUES($id, $current_lng, $current_lat)");   
+
+                telegram_send_message($chat_id, 'Una nuova posizione è stata inserita', null);
+            }           
+        }
+
+        //se l'id utente non è stato trovato
+        else
+            telegram_send_message($chat_id, 'Devi inviare la tua posizione prima di poter salvare', null);
+    }
+```
 
 ### /Aggiungi museo d'arte/Aggingi museo storico/Aggiungi altro museo:
 
-All'interno del Data Base ogni museo è dotato di 3 campi riportanti un intero, 0 o 1, il cui scopo è di segnalarne la tipologia, cioè se si tratta di una mostra artistica, storica o di altra materia. Ogni nuovo museo avrà tutti i campi sullo 0 e lo scopo di questo comando è di impostare ad 1 il campo che l'utente ha scelto per descrivere la tipologia della galleria in esame. Ogni museo può avere un solo campo su 1, quindi nelle circostanze in cui un utente usi il comando su un edificio già provvisto di campo, il bot risponde che il dettaglio è già presente. In circostanze normali, in cui la tipologia non sia definita, il bot eseguirà nuovamente il calcolo dell'area della mostra più vicina, per verificare che la posizione dell'utente sia effettivamente nelle sue vicinanze. Al termine dell'operazione il bot confermerà l'avvenuta operazione ed il nuovo campo inserito mostrerà la tipologia del museo a qualunque utente esegua il comando */Cerca*.
+All'interno della base di dati ogni museo è dotato di 3 campi riportanti un intero, 0 o 1, il cui scopo è di segnalarne la tipologia, cioè se si tratta di una mostra artistica, storica o di altra materia. Ogni nuovo museo avrà tutti i campi sullo 0 e lo scopo di questo comando è di impostare ad 1 il campo che l'utente ha scelto per descrivere la tipologia della galleria in esame. Ogni museo può avere un solo campo su 1, quindi nelle circostanze in cui un utente usi il comando su un edificio già provvisto del dettaglio, il bot risponde che questo è già presente. In circostanze normali, in cui la tipologia non sia definita, il bot verificherà nuovamente se la posizione corrente dell'utente rientri nel raggio di una mostra, così da poter verificare che l'utente sia effettivamente nelle sue vicinanze. Al termine dell'operazione il bot confermerà l'avvenuta operazione ed il nuovo valore inserito mostrerà la tipologia del museo a qualunque utente esegua il comando */Cerca*.
 
-```inserire codice di AGGIUNGI TIPOLOGIA MUSEO```
+```
+else if (strpos($text, "d'arte") === 15){
+
+            //estrapola la posizione dell'utente
+            $pos = db_table_query("SELECT * FROM current_pos WHERE Id = 
+            $from_id");
+        
+            //se l'utente ha segnalato la sua posizione
+            if (count($pos) >= 1) {
+                    
+                //copia le coordinate
+                $lat = $pos[0][1];
+                $lng = $pos[0][2];
+        
+                //estrae la locazione piu' vicina all'utente corrente
+                $nearby = db_table_query("SELECT *, 
+                SQRT(POW($lat - Latitudine, 2) + POW($lng - Longitudine, 2)) 
+                AS distance
+                FROM musei
+                ORDER BY distance ASC
+                LIMIT 1");  
+
+                $museo_vicino = $nearby[0][0];
+
+                //controlla di essere nel raggio (200m) di un opera
+                if (($lat >= $nearby[0][13]+0.001 && $lat <= $nearby[0][13]-0.001) && 
+                    ($lng >= $nearby[0][14]+0.001 && $lng <= $nearby[0][14]-0.001)) {
+
+                        //se non è nel raggio
+                        telegram_send_message($chat_id, 'Devi essere nel raggio di un museo per poter effettuare modifiche', null);
+                }
+                //se è nel raggio
+                else {
+
+                    if ($nearby[0][20] == 0 && $nearby[0][21] == 0 && $nearby[0][22] == 0)
+                    {   
+                        //aggiunge presenza di un dipinto nel db
+                        db_perform_action("UPDATE musei SET Arte = 1 WHERE Id = $museo_vicino ");
+
+                        telegram_send_message($chat_id, 'Hai aggiunto il dettaglio museo di arte', null);
+                    }
+                    else if ($nearby[0][20] == 1)                     
+                        telegram_send_message($chat_id, 'Il dettaglio museo di arte è già stato inserito', null);
+                    else
+                    telegram_send_message($chat_id, 'Un dettaglio per questo museo opera è già presente...', null);
+                }                
+            }
+            //posizione non trovata 
+            else
+                telegram_send_message($chat_id, 'Devi mandare prima le tue coordinate', null);
+    }
+    else if ((strpos($text, "storico") === 15) && ($utente[0][2] < 1) )
+        telegram_send_message($chat_id, 'Mi dispiace ma ho prima bisogno del tuo codice!', null);
+    
+    else if (strpos($text, "storico") === 15){
+
+            //estrapola la posizione dell'utente
+            $pos = db_table_query("SELECT * FROM current_pos WHERE Id = 
+            $from_id");
+        
+            //se l'utente ha segnalato la sua posizione
+            if (count($pos) >= 1) {
+                    
+                //copia le coordinate
+                $lat = $pos[0][1];
+                $lng = $pos[0][2];
+        
+                //estrae la locazione piu' vicina all'utente corrente
+                $nearby = db_table_query("SELECT *, 
+                SQRT(POW($lat - Latitudine, 2) + POW($lng - Longitudine, 2)) 
+                AS distance
+                FROM musei
+                ORDER BY distance ASC
+                LIMIT 1");  
+
+                $museo_vicino = $nearby[0][5];
+
+                //controlla di essere nel raggio (200m) di un opera
+                if (($lat >= $nearby[0][13]+0.001 && $lat <= $nearby[0][13]-0.001) && 
+                    ($lng >= $nearby[0][14]+0.001 && $lng <= $nearby[0][14]-0.001)) {
+
+                        //se non è nel raggio
+                        telegram_send_message($chat_id, 'Devi essere nel raggio di un museo per poter effettuare modifiche', null);
+                }
+                //se è nel raggio
+                else {
+
+                    if ($nearby[0][20] == 0 && $nearby[0][21] == 0 && $nearby[0][22] == 0)
+                    {   
+                        //aggiunge presenza di un dipinto nel db
+                        db_perform_action("UPDATE musei SET Storia = 1 WHERE Id = $museo_vicino ");
+
+                        telegram_send_message($chat_id, 'Hai aggiunto il dettaglio museo storico', null);
+                    }
+                    else if ($nearby[0][21] == 1)                     
+                        telegram_send_message($chat_id, 'Il dettaglio museo storico è già stato inserito', null);
+                    else
+                        telegram_send_message($chat_id, 'Un dettaglio per questo museo è già presente...', null);
+                }                
+            }
+            //posizione non trovata 
+            else
+                telegram_send_message($chat_id, 'Devi mandare prima le tue coordinate', null);
+    }
+    else if ((strpos($text, "altro") === 9) && ($utente[0][2] < 1) )
+        telegram_send_message($chat_id, 'Mi dispiace ma ho prima bisogno del tuo codice!', null);
+
+    else if (strpos($text, "altro") === 9){
+            //estrapola la posizione dell'utente
+            $pos = db_table_query("SELECT * FROM current_pos WHERE Id = 
+            $from_id");
+        
+            //se l'utente ha segnalato la sua posizione
+            if (count($pos) >= 1) {
+                    
+                //copia le coordinate
+                $lat = $pos[0][1];
+                $lng = $pos[0][2];
+        
+                //estrae la locazione piu' vicina all'utente corrente
+                $nearby = db_table_query("SELECT *, 
+                SQRT(POW($lat - Latitudine, 2) + POW($lng - Longitudine, 2)) 
+                AS distance
+                FROM musei
+                ORDER BY distance ASC
+                LIMIT 1");  
+
+                $museo_vicino = $nearby[0][0];
+
+                //controlla di essere nel raggio (200m) di un opera
+                if (($lat >= $nearby[0][13]+0.001 && $lat <= $nearby[0][13]-0.001) && 
+                    ($lng >= $nearby[0][14]+0.001 && $lng <= $nearby[0][14]-0.001)) {
+
+                        //se non è nel raggio
+                        telegram_send_message($chat_id, 'Devi essere nel raggio di un opera per poter effettuare modifiche', null);
+                }
+                //se è nel raggio
+                else {
+
+                    if ($nearby[0][20] == 0 && $nearby[0][21] == 0 && $nearby[0][22] == 0)
+                    {   
+                        //aggiunge presenza di un dipinto nel db
+                        db_perform_action("UPDATE musei SET Altro = 1 WHERE Id = $museo_vicino ");
+
+                        telegram_send_message($chat_id, 'Hai aggiunto il dettaglio "Altro"', null);
+                    }
+                    else if ($nearby[0][22] == 1)                     
+                        telegram_send_message($chat_id, 'Il dettaglio "Altro" è già stato inserito', null);
+                    else
+                    telegram_send_message($chat_id, 'Un dettaglio per questo museo è già presente...', null);
+                }                
+            }
+            //posizione non trovata 
+            else
+                telegram_send_message($chat_id, 'Devi mandare prima le tue coordinate', null);
+    }
+```
 
 ## Validazione
 
