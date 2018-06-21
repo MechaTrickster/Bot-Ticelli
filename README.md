@@ -9,10 +9,10 @@
 #### *Daniele Commodaro [MAT. 267250]         GitHub: pankake*
 
 # Introduzione
-Il "Bot-Ticelli" è un bot dell'applicazione Telegram il cui scopo consiste nel facilitare la scoperta dei musei di tutto il nostro paese a chiunque voglia approfondire il proprio bagaglio culturale sul patrimonio artistico e/o storico della nostra penisola. Le sue funzionalità prevedono l'invio della posizione del'esposizione più vicina all'utente interessato, grazie alle coordinate gps salvate su un Data Base opportunamente creato. Inoltre, dal momento che non saranno presenti tutti i musei d'Italia sin dai primi momenti, agli utento è permesso di aggiungerne tramite acquisizione e salvataggio della sua posizione, consentendo all'applicazione di rimanere aggiornata anche in futuro.
+Il "Bot-Ticelli" è un'applicazione sviluppata per piattaforma Telegram, il cui scopo è quello di assistere un utente viaggiatore che si pone come obbiettivo quello di riscoprire i principali edifici artstici, storici e culturali distribuiti su tutto il territorio nazionale. Le sue funzionalità prevedono la ricerca dell'esposizione più vicina, viene permessa l'aggiunta di nuovi luoghi di interesse nel caso questi non fossero già presenti, aggiungerne alcuni dettagli, ed infine una sorta di itinerario che per tutta la durata del viaggio assiste il viaggiatore mostrandogli il percorso più indicato da seguire. In questo modo è possibile sfruttare una base di dati preesistente inserita attraverso un dataset in formato .csv, la quale grazie al contributo dell'utente viene arricchita a patto che egli abbia eseguito il processo autenticativo previsto.
 
 # Struttura
-Tramite Telegram, l'utente può interagire con il "Bot-Ticelli" inviando la propria posizione, la quale viene salvata nel Data Base per ogni utente ed è utilizzata dal "Bot-Ticelli" per trovare il museo più vicino ad essa o per salvarne uno nuovo. 
+Tramite Telegram, l'utente può interagire con il "Bot-Ticelli" inviando la propria posizione, la quale viene salvata nel Data Base così da poter essere utilizzata per trovare il museo più vicino ad essa o per salvarne uno nuovo. 
 
 ```inserire codice di SALVATAGGIO POSIZIONE UTENTE```
 
