@@ -15,7 +15,8 @@ Il "Bot-Ticelli" è un'applicazione sviluppata per piattaforma Telegram, il cui 
 Tramite Telegram, l'utente può interagire con il "Bot-Ticelli" inviando la propria posizione, la quale viene salvata nel Data Base così da poter essere utilizzata per trovare il museo più vicino ad essa o per salvarne uno nuovo. 
 
 ```//se viene inviata la posizione
-if (isset($message['location'])) {
+if (isset($message['location']))
+{
     $lat = $message['location']['latitude'];
     $lng = $message['location']['longitude'];
 
@@ -41,8 +42,8 @@ Questa opzione serve per chiedere al bot di visualizzare il museo successivo a q
 
 ```
 //cerca la posizione più vicina
-    if (strpos($text, "Cerca") === 0) {
- 
+    if (strpos($text, "Cerca") === 0) 
+    {
         //estrapola la posizione dell'utente
         $pos = db_table_query("SELECT * FROM current_pos WHERE Id = $from_id");
 
@@ -103,8 +104,8 @@ Questo è il comando per chiedere al bot di salvare nel Data Base la posizione i
 
 ```
 //salva una nuova posizione
-    else if (strpos($text, "Salva") === 0) {
-
+    else if (strpos($text, "Salva") === 0) 
+    {
         //estrae l'id dalla tabella 'current_position'
         $current = db_table_query("SELECT * FROM current_pos WHERE Id = $from_id");
 
@@ -157,8 +158,8 @@ Questo è il comando per chiedere al bot di salvare nel Data Base la posizione i
 All'interno della base di dati ogni museo è dotato di 3 campi riportanti un intero, 0 o 1, il cui scopo è di segnalarne la tipologia, cioè se si tratta di una mostra artistica, storica o di altra materia. Ogni nuovo museo avrà tutti i campi sullo 0 e lo scopo di questo comando è di impostare ad 1 il campo che l'utente ha scelto per descrivere la tipologia della galleria in esame. Ogni museo può avere un solo campo su 1, quindi nelle circostanze in cui un utente usi il comando su un edificio già provvisto del dettaglio, il bot risponde che questo è già presente. In circostanze normali, in cui la tipologia non sia definita, il bot verificherà nuovamente se la posizione corrente dell'utente rientri nel raggio di una mostra, così da poter verificare che l'utente sia effettivamente nelle sue vicinanze. Al termine dell'operazione il bot confermerà l'avvenuta operazione ed il nuovo valore inserito mostrerà la tipologia del museo a qualunque utente esegua il comando **/Cerca**.
 
 ```
-else if (strpos($text, "d'arte") === 15){
-
+else if (strpos($text, "d'arte") === 15)
+{
             //estrapola la posizione dell'utente
             $pos = db_table_query("SELECT * FROM current_pos WHERE Id = 
             $from_id");
@@ -210,8 +211,8 @@ else if (strpos($text, "d'arte") === 15){
     else if ((strpos($text, "storico") === 15) && ($utente[0][2] < 1) )
         telegram_send_message($chat_id, 'Mi dispiace ma ho prima bisogno del tuo codice!', null);
     
-    else if (strpos($text, "storico") === 15){
-
+    else if (strpos($text, "storico") === 15)
+    {
             //estrapola la posizione dell'utente
             $pos = db_table_query("SELECT * FROM current_pos WHERE Id = 
             $from_id");
@@ -263,7 +264,8 @@ else if (strpos($text, "d'arte") === 15){
     else if ((strpos($text, "altro") === 9) && ($utente[0][2] < 1) )
         telegram_send_message($chat_id, 'Mi dispiace ma ho prima bisogno del tuo codice!', null);
 
-    else if (strpos($text, "altro") === 9){
+    else if (strpos($text, "altro") === 9)
+    {
             //estrapola la posizione dell'utente
             $pos = db_table_query("SELECT * FROM current_pos WHERE Id = 
             $from_id");
@@ -287,14 +289,14 @@ else if (strpos($text, "d'arte") === 15){
 
                 //controlla di essere nel raggio (200m) di un opera
                 if (($lat >= $nearby[0][13]+0.001 && $lat <= $nearby[0][13]-0.001) && 
-                    ($lng >= $nearby[0][14]+0.001 && $lng <= $nearby[0][14]-0.001)) {
-
+                    ($lng >= $nearby[0][14]+0.001 && $lng <= $nearby[0][14]-0.001)) 
+                    {
                         //se non è nel raggio
                         telegram_send_message($chat_id, 'Devi essere nel raggio di un opera per poter effettuare modifiche', null);
                 }
                 //se è nel raggio
-                else {
-
+                else 
+                {
                     if ($nearby[0][20] == 0 && $nearby[0][21] == 0 && $nearby[0][22] == 0)
                     {   
                         //aggiunge presenza di un dipinto nel db
